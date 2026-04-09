@@ -26,7 +26,7 @@
 5. Select DocManagerAI.csproj and click Open
 6. Wait for NuGet packages to restore (bottom status bar)
 7. Press F5 or click the green Run button
-8. Browser opens at http://localhost:5000
+8. Browser opens at https://docmanagerai-production.up.railway.app
 
 The SQLite database (app.db) is created automatically on first run.
 No migrations needed. No tessdata folder needed.
