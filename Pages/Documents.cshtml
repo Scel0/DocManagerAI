@@ -1,0 +1,155 @@
+@page
+@model DocManagerAI.Pages.DocumentsModel
+@{
+    ViewData["Title"] = "All Documents";
+}
+
+<div class="section-header">
+    <h1>All Documents</h1>
+    <a href="/Upload" class="btn btn-primary btn-sm">&#8679; Upload New</a>
+</div>
+
+<div class="card card-sm" style="margin-bottom:20px">
+    <form method="get" style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end">
+        <div class="form-group" style="margin:0;flex:2;min-width:160px">
+            <label>Search Vendor / Invoice</label>
+            <input type="text" name="search" value="@Model.Search" placeholder="Vendor name or invoice number..." />
+        </div>
+        <div class="form-group" style="margin:0;flex:1;min-width:120px">
+            <label>Status</label>
+            <select name="status">
+                <option value="">All Statuses</option>
+                @if (Model.StatusFilter == "Pending")
+                {
+                    <option value="Pending" selected>Pending</option>
+                }
+                else
+                {
+                    <option value="Pending">Pending</option>
+                }
+                @if (Model.StatusFilter == "Approved")
+                {
+                    <option value="Approved" selected>Approved</option>
+                }
+                else
+                {
+                    <option value="Approved">Approved</option>
+                }
+                @if (Model.StatusFilter == "Rejected")
+                {
+                    <option value="Rejected" selected>Rejected</option>
+                }
+                else
+                {
+                    <option value="Rejected">Rejected</option>
+                }
+            </select>
+        </div>
+        <div class="form-group" style="margin:0;flex:1;min-width:120px">
+            <label>Type</label>
+            <select name="doctype">
+                <option value="">All Types</option>
+                @if (Model.DocTypeFilter == "Invoice")
+                {
+                    <option value="Invoice" selected>Invoice</option>
+                }
+                else
+                {
+                    <option value="Invoice">Invoice</option>
+                }
+                @if (Model.DocTypeFilter == "Credit Note")
+                {
+                    <option value="Credit Note" selected>Credit Note</option>
+                }
+                else
+                {
+                    <option value="Credit Note">Credit Note</option>
+                }
+            </select>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:0">
+            <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+            <a href="/Documents" class="btn btn-secondary btn-sm">Clear</a>
+        </div>
+    </form>
+</div>
+
+@if (!Model.Documents.Any())
+{
+    <div class="card">
+        <div class="no-data">
+            <div class="icon">&#128196;</div>
+            <p>No documents found. <a href="/Upload">Upload your first invoice.</a></p>
+        </div>
+    </div>
+}
+else
+{
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>File</th>
+                    <th>Vendor</th>
+                    <th>Invoice No.</th>
+                    <th>Type</th>
+                    <th>Amount</th>
+                    <th>VAT</th>
+                    <th>Doc Date</th>
+                    <th>Step</th>
+                    <th>Status</th>
+                    <th>Uploaded By</th>
+                    <th>Uploaded</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var doc in Model.Documents)
+                {
+                    <tr>
+                        <td style="color:#94a3b8;font-size:12px">@doc.Id</td>
+                        <td>
+                            <span class="badge @(doc.FileType == "PDF" ? "badge-pdf" : "badge-docx")" style="font-size:10px">
+                                @doc.FileType
+                            </span>
+                            <span style="font-size:12px;color:#64748b;margin-left:4px">@doc.FileName</span>
+                        </td>
+                        <td><strong>@doc.Vendor</strong></td>
+                        <td style="font-family:monospace;font-size:12px">@(doc.InvoiceNumber ?? "—")</td>
+                        <td>
+                            <span class="badge @(doc.DocumentType == "Credit Note" ? "badge-credit" : "badge-invoice")">
+                                @doc.DocumentType
+                            </span>
+                        </td>
+                        <td><strong>R @doc.Amount.ToString("N2")</strong></td>
+                        <td style="color:#64748b">R @doc.VAT.ToString("N2")</td>
+                        <td style="color:#64748b;font-size:12px">
+                            @(doc.DocumentDate.HasValue ? doc.DocumentDate.Value.ToString("dd MMM yyyy") : "—")
+                        </td>
+                        <td>
+                            @if (doc.Status == "Approved")
+                            {
+                                <span style="color:#16a34a;font-size:12px">&#10003; Done</span>
+                            }
+                            else if (doc.Status == "Rejected")
+                            {
+                                <span style="color:#dc2626;font-size:12px">&#10005; Rejected</span>
+                            }
+                            else
+                            {
+                                <span style="font-size:12px;color:#92400e">@DocManagerAI.Services.AuthService.GetStepLabel(doc.ApprovalStep)</span>
+                            }
+                        </td>
+                        <td>
+                            <span class="badge badge-@doc.Status.ToLower()">@doc.Status</span>
+                        </td>
+                        <td style="font-size:12px;color:#64748b">@doc.UploadedBy</td>
+                        <td style="font-size:12px;color:#64748b">@doc.UploadedAt.ToString("dd MMM yyyy")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <p class="text-muted" style="margin-top:12px">Showing @Model.Documents.Count document(s)</p>
+}

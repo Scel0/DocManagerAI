@@ -1,0 +1,170 @@
+@page
+@model DocManagerAI.Pages.ApproveModel
+@{
+    ViewData["Title"] = "Approve Documents";
+    var sessionRole = HttpContext.Session.GetString("Role");
+    var sessionUser = HttpContext.Session.GetString("User");
+}
+
+<div class="section-header">
+    <h1>Approval Workflow</h1>
+    @if (!string.IsNullOrEmpty(sessionRole))
+    {
+        <span style="font-size:13px;color:#64748b">
+            Logged in as <span class="role-badge role-@sessionRole.ToLower()">@sessionRole</span>
+            &nbsp;<strong>@sessionUser</strong>
+        </span>
+    }
+</div>
+
+@if (string.IsNullOrEmpty(sessionRole))
+{
+    <div class="alert alert-danger">
+        <strong>Access Denied.</strong> You must <a href="/Login">log in</a> to access the approval workflow.
+    </div>
+}
+else
+{
+    @if (!string.IsNullOrEmpty(Model.StatusMessage))
+    {
+        <div class="alert @(Model.IsError ? "alert-danger" : "alert-success")">
+            @Model.StatusMessage
+        </div>
+    }
+
+    <div class="card card-sm" style="margin-bottom:20px">
+        <div style="display:flex;gap:0;align-items:center">
+            <div style="flex:1;text-align:center">
+                <div class="step-dot @(sessionRole == "Reviewer" ? "active" : "done")" style="margin:0 auto 6px">1</div>
+                <div style="font-size:11px;font-weight:600;color:#475569">REVIEWER</div>
+                <div style="font-size:11px;color:#94a3b8">Initial check</div>
+            </div>
+            <div class="step-line @(sessionRole is "Manager" or "Finance" ? "done" : "waiting")" style="flex:2"></div>
+            <div style="flex:1;text-align:center">
+                <div class="step-dot @(sessionRole == "Manager" ? "active" : sessionRole == "Finance" ? "done" : "waiting")" style="margin:0 auto 6px">2</div>
+                <div style="font-size:11px;font-weight:600;color:#475569">MANAGER</div>
+                <div style="font-size:11px;color:#94a3b8">Management review</div>
+            </div>
+            <div class="step-line @(sessionRole == "Finance" ? "done" : "waiting")" style="flex:2"></div>
+            <div style="flex:1;text-align:center">
+                <div class="step-dot @(sessionRole == "Finance" ? "active" : "waiting")" style="margin:0 auto 6px">3</div>
+                <div style="font-size:11px;font-weight:600;color:#475569">FINANCE</div>
+                <div style="font-size:11px;color:#94a3b8">Final approval</div>
+            </div>
+        </div>
+    </div>
+
+    <h2>Pending Documents (@Model.PendingDocuments.Count)</h2>
+
+    @if (!Model.PendingDocuments.Any())
+    {
+        <div class="card">
+            <div class="no-data">
+                <div class="icon">&#10003;</div>
+                <p>No documents are waiting for approval right now.</p>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="table-wrap" style="margin-bottom:28px">
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Invoice No.</th>
+                        <th>Vendor</th>
+                        <th>Type</th>
+                        <th>Amount</th>
+                        <th>Doc Date</th>
+                        <th>Awaiting</th>
+                        <th>Uploaded By</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var doc in Model.PendingDocuments)
+                    {
+                        var canAct = DocManagerAI.Services.AuthService.CanApproveAtStep(sessionRole, doc.ApprovalStep);
+                        <tr>
+                            <td style="color:#94a3b8;font-size:12px">@doc.Id</td>
+                            <td style="font-family:monospace;font-size:12px">@(doc.InvoiceNumber ?? "—")</td>
+                            <td><strong>@doc.Vendor</strong></td>
+                            <td>
+                                <span class="badge @(doc.DocumentType == "Credit Note" ? "badge-credit" : "badge-invoice")">
+                                    @doc.DocumentType
+                                </span>
+                            </td>
+                            <td><strong>R @doc.Amount.ToString("N2")</strong></td>
+                            <td style="font-size:12px;color:#64748b">
+                                @(doc.DocumentDate.HasValue ? doc.DocumentDate.Value.ToString("dd MMM yyyy") : "—")
+                            </td>
+                            <td>
+                                <span class="badge badge-pending" style="font-size:10px">
+                                    @DocManagerAI.Services.AuthService.GetStepLabel(doc.ApprovalStep)
+                                </span>
+                            </td>
+                            <td style="font-size:12px;color:#64748b">@doc.UploadedBy</td>
+                            <td>
+                                @if (canAct)
+                                {
+                                    <form method="post" style="display:flex;gap:6px;align-items:center">
+                                        <input type="hidden" name="Id" value="@doc.Id" />
+                                        <button type="submit" name="action" value="approve"
+                                                class="btn btn-success btn-sm">
+                                            &#10003; Approve
+                                        </button>
+                                        <button type="submit" name="action" value="reject"
+                                                class="btn btn-danger btn-sm">
+                                            &#10005; Reject
+                                        </button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <span style="font-size:12px;color:#94a3b8">Not your step</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    <h2>Completed Documents</h2>
+    @if (!Model.CompletedDocuments.Any())
+    {
+        <p class="text-muted">No completed documents yet.</p>
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Invoice No.</th>
+                        <th>Vendor</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>Completed</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var doc in Model.CompletedDocuments)
+                    {
+                        <tr>
+                            <td style="color:#94a3b8;font-size:12px">@doc.Id</td>
+                            <td style="font-family:monospace;font-size:12px">@(doc.InvoiceNumber ?? "—")</td>
+                            <td>@doc.Vendor</td>
+                            <td>R @doc.Amount.ToString("N2")</td>
+                            <td><span class="badge badge-@doc.Status.ToLower()">@doc.Status</span></td>
+                            <td style="font-size:12px;color:#64748b">@doc.UploadedAt.ToString("dd MMM yyyy")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+}

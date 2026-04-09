@@ -1,0 +1,18 @@
+@page
+@model DocManagerAI.Pages.ErrorModel
+@{
+    ViewData["Title"] = "Error";
+}
+
+<div class="card" style="max-width:500px;margin:0 auto;text-align:center;padding:48px">
+    <div style="font-size:48px;margin-bottom:16px">&#9888;</div>
+    <h2>Something went wrong</h2>
+    @if (Model.ShowRequestId)
+    {
+        <p class="text-muted" style="margin-top:8px">Request ID: @Model.RequestId</p>
+    }
+    <div style="margin-top:24px;display:flex;gap:10px;justify-content:center">
+        <a href="/"      class="btn btn-primary">Back to Dashboard</a>
+        <a href="/Login" class="btn btn-secondary">Login</a>
+    </div>
+</div>

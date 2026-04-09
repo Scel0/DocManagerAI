@@ -1,0 +1,86 @@
+@page
+@model DocManagerAI.Pages.LoginModel
+@{
+    ViewData["Title"] = "Login";
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login — DocManager AI</title>
+    <link rel="stylesheet" href="~/css/site.css" />
+</head>
+<body style="background:#0f172a;display:flex;align-items:center;justify-content:center;min-height:100vh">
+
+<div style="width:100%;max-width:420px;padding:24px">
+    <div style="text-align:center;margin-bottom:24px">
+        <h1 style="color:#fff;font-size:26px">&#9632; DocManager AI</h1>
+        <p style="color:#94a3b8;font-size:13px;margin-top:4px">Secure Invoice Management System</p>
+    </div>
+
+    <div class="card">
+        <h2 style="margin-bottom:20px">Sign In</h2>
+
+        @if (!string.IsNullOrEmpty(Model.Message))
+        {
+            <div class="alert alert-danger">@Model.Message</div>
+        }
+
+        <form method="post">
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" name="Username" placeholder="Enter username" required autocomplete="username" />
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" name="Password" placeholder="Enter password" required autocomplete="current-password" />
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center">
+                Sign In
+            </button>
+        </form>
+
+        <hr class="divider" />
+
+        <p style="font-size:12px;font-weight:600;color:#475569;margin-bottom:8px">Demo accounts:</p>
+        <table style="width:100%;font-size:12px">
+            <thead>
+                <tr>
+                    <th style="background:none;border:none;padding:3px 6px 3px 0;font-size:11px;color:#94a3b8">User</th>
+                    <th style="background:none;border:none;padding:3px 6px;font-size:11px;color:#94a3b8">Password</th>
+                    <th style="background:none;border:none;padding:3px 0;font-size:11px;color:#94a3b8">Role</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="border:none;padding:3px 6px 3px 0;color:#334155">admin</td>
+                    <td style="border:none;padding:3px 6px;color:#334155">Admin@1234</td>
+                    <td style="border:none;padding:3px 0"><span class="role-badge role-admin">Admin</span></td>
+                </tr>
+                <tr>
+                    <td style="border:none;padding:3px 6px 3px 0;color:#334155">reviewer</td>
+                    <td style="border:none;padding:3px 6px;color:#334155">Review@1234</td>
+                    <td style="border:none;padding:3px 0"><span class="role-badge role-reviewer">Reviewer</span></td>
+                </tr>
+                <tr>
+                    <td style="border:none;padding:3px 6px 3px 0;color:#334155">manager</td>
+                    <td style="border:none;padding:3px 6px;color:#334155">Manage@1234</td>
+                    <td style="border:none;padding:3px 0"><span class="role-badge role-manager">Manager</span></td>
+                </tr>
+                <tr>
+                    <td style="border:none;padding:3px 6px 3px 0;color:#334155">finance</td>
+                    <td style="border:none;padding:3px 6px;color:#334155">Finance@1234</td>
+                    <td style="border:none;padding:3px 0"><span class="role-badge role-finance">Finance</span></td>
+                </tr>
+                <tr>
+                    <td style="border:none;padding:3px 6px 3px 0;color:#334155">viewer</td>
+                    <td style="border:none;padding:3px 6px;color:#334155">View@1234</td>
+                    <td style="border:none;padding:3px 0"><span class="role-badge role-viewer">Viewer</span></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>

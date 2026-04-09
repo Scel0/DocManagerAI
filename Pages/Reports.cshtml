@@ -1,0 +1,206 @@
+@page
+@model DocManagerAI.Pages.ReportsModel
+@{
+    ViewData["Title"] = "Reports & Insights";
+}
+
+<div style="margin-bottom:24px">
+    <h1>Reports &amp; AI Insights</h1>
+    <p class="text-muted">Filter by date, vendor, status, or amount. AI insights update automatically.</p>
+</div>
+
+<div class="card">
+    <h3>Filters</h3>
+    <form method="get">
+        <div class="form-row">
+            <div class="form-group">
+                <label>From Date</label>
+                <input type="date" name="from" value="@Model.FromDate" />
+            </div>
+            <div class="form-group">
+                <label>To Date</label>
+                <input type="date" name="to" value="@Model.ToDate" />
+            </div>
+            <div class="form-group">
+                <label>Vendor</label>
+                <input type="text" name="vendor" value="@Model.VendorFilter" placeholder="e.g. Shoprite" />
+            </div>
+            <div class="form-group">
+                <label>Status</label>
+                <select name="status">
+                    <option value="">All Statuses</option>
+                    @if (Model.StatusFilter == "Pending")  { <option value="Pending"  selected>Pending</option>  }
+                    else                                   { <option value="Pending">Pending</option>  }
+                    @if (Model.StatusFilter == "Approved") { <option value="Approved" selected>Approved</option> }
+                    else                                   { <option value="Approved">Approved</option> }
+                    @if (Model.StatusFilter == "Rejected") { <option value="Rejected" selected>Rejected</option> }
+                    else                                   { <option value="Rejected">Rejected</option> }
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Min Amount (R)</label>
+                <input type="number" name="minAmount" value="@Model.MinAmount" placeholder="0" min="0" step="0.01" />
+            </div>
+            <div class="form-group">
+                <label>Max Amount (R)</label>
+                <input type="number" name="maxAmount" value="@Model.MaxAmount" placeholder="No limit" min="0" step="0.01" />
+            </div>
+        </div>
+        <div style="display:flex;gap:8px">
+            <button type="submit" class="btn btn-primary">Apply Filters</button>
+            <a href="/Reports" class="btn btn-secondary">Clear All</a>
+        </div>
+    </form>
+</div>
+
+@if (!Model.Documents.Any())
+{
+    <div class="card">
+        <div class="no-data">
+            <div class="icon">&#128202;</div>
+            <p>No documents match your filters. Try adjusting or clearing the filters.</p>
+        </div>
+    </div>
+}
+else
+{
+    <!-- Summary Stats -->
+    <div class="stats-grid">
+        <div class="stat-card blue">
+            <div class="stat-num">@Model.Documents.Count</div>
+            <div class="stat-label">Documents Found</div>
+        </div>
+        <div class="stat-card green">
+            <div class="stat-num">R @Model.Summary.TotalSpend.ToString("N0")</div>
+            <div class="stat-label">Total Spend</div>
+        </div>
+        <div class="stat-card purple">
+            <div class="stat-num">R @Model.Summary.TotalVAT.ToString("N0")</div>
+            <div class="stat-label">Total VAT</div>
+        </div>
+        <div class="stat-card orange">
+            <div class="stat-num">R @Model.Summary.AverageInvoice.ToString("N0")</div>
+            <div class="stat-label">Avg Invoice Value</div>
+        </div>
+    </div>
+
+    <!-- AI Insights -->
+    <h2>AI Insights</h2>
+    <div class="insights-grid">
+        @foreach (var insight in Model.Summary.Insights)
+        {
+            <div class="insight-card @insight.Type">
+                <div class="insight-title">@insight.Title</div>
+                <div class="insight-detail">@insight.Detail</div>
+            </div>
+        }
+    </div>
+
+    <!-- Top Vendors -->
+    @if (Model.Summary.TopVendors.Any())
+    {
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:24px">
+            <div class="card">
+                <h3>Top Vendors by Spend</h3>
+                @{
+                    var maxVendorSpend = Model.Summary.TopVendors.Max(v => v.Total);
+                }
+                @foreach (var v in Model.Summary.TopVendors)
+                {
+                    var pct = maxVendorSpend > 0 ? (int)(v.Total / maxVendorSpend * 100) : 0;
+                    <div class="vendor-bar">
+                        <div class="vendor-bar-label">
+                            <span>@v.Vendor</span>
+                            <span>R @v.Total.ToString("N0") (@v.Count inv.)</span>
+                        </div>
+                        <div class="vendor-bar-track">
+                            <div class="vendor-bar-fill" style="width:@pct%"></div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div class="card">
+                <h3>Status Breakdown</h3>
+                <div style="display:flex;flex-direction:column;gap:12px;margin-top:8px">
+                    @{
+                        var total = Model.Documents.Count;
+                        var approvedPct = total > 0 ? (int)((double)Model.Summary.ApprovedCount / total * 100) : 0;
+                        var pendingPct  = total > 0 ? (int)((double)Model.Summary.PendingCount  / total * 100) : 0;
+                        var rejectedPct = total > 0 ? (int)((double)Model.Summary.RejectedCount / total * 100) : 0;
+                    }
+                    <div class="vendor-bar">
+                        <div class="vendor-bar-label">
+                            <span>&#10003; Approved</span><span>@Model.Summary.ApprovedCount (@approvedPct%)</span>
+                        </div>
+                        <div class="vendor-bar-track">
+                            <div class="vendor-bar-fill" style="width:@approvedPct%;background:#22c55e"></div>
+                        </div>
+                    </div>
+                    <div class="vendor-bar">
+                        <div class="vendor-bar-label">
+                            <span>&#9679; Pending</span><span>@Model.Summary.PendingCount (@pendingPct%)</span>
+                        </div>
+                        <div class="vendor-bar-track">
+                            <div class="vendor-bar-fill" style="width:@pendingPct%;background:#f59e0b"></div>
+                        </div>
+                    </div>
+                    <div class="vendor-bar">
+                        <div class="vendor-bar-label">
+                            <span>&#10005; Rejected</span><span>@Model.Summary.RejectedCount (@rejectedPct%)</span>
+                        </div>
+                        <div class="vendor-bar-track">
+                            <div class="vendor-bar-fill" style="width:@rejectedPct%;background:#ef4444"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Document Table -->
+    <h2>Documents</h2>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Invoice No.</th>
+                    <th>Vendor</th>
+                    <th>Type</th>
+                    <th>Amount</th>
+                    <th>VAT</th>
+                    <th>Doc Date</th>
+                    <th>Status</th>
+                    <th>Uploaded</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var doc in Model.Documents)
+                {
+                    <tr>
+                        <td style="color:#94a3b8;font-size:12px">@doc.Id</td>
+                        <td style="font-family:monospace;font-size:12px">@(doc.InvoiceNumber ?? "—")</td>
+                        <td><strong>@doc.Vendor</strong></td>
+                        <td>
+                            <span class="badge @(doc.DocumentType == "Credit Note" ? "badge-credit" : "badge-invoice")">
+                                @doc.DocumentType
+                            </span>
+                        </td>
+                        <td><strong>R @doc.Amount.ToString("N2")</strong></td>
+                        <td style="color:#64748b">R @doc.VAT.ToString("N2")</td>
+                        <td style="font-size:12px;color:#64748b">
+                            @(doc.DocumentDate.HasValue ? doc.DocumentDate.Value.ToString("dd MMM yyyy") : "—")
+                        </td>
+                        <td><span class="badge badge-@doc.Status.ToLower()">@doc.Status</span></td>
+                        <td style="font-size:12px;color:#64748b">@doc.UploadedAt.ToString("dd MMM yyyy")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <p class="text-muted" style="margin-top:12px">
+        Showing @Model.Documents.Count documents &mdash; Total: R@Model.Summary.TotalSpend.ToString("N2")
+    </p>
+}

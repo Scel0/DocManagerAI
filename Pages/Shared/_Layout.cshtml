@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] — DocManager AI</title>
+    <link rel="stylesheet" href="~/css/site.css" />
+</head>
+<body>
+
+<header class="topbar">
+    <div class="topbar-inner">
+        <a class="brand" href="/">
+            <span class="brand-icon">&#9632;</span> DocManager AI
+        </a>
+        <nav class="main-nav">
+            <a href="/">Dashboard</a>
+            <a href="/Upload">Upload</a>
+            <a href="/Documents">Documents</a>
+            <a href="/Approve">Approve</a>
+            <a href="/Reports">Reports</a>
+        </nav>
+        <div class="user-info">
+            @{
+                var sessionUser = ViewContext.HttpContext.Session.GetString("User");
+                var sessionRole = ViewContext.HttpContext.Session.GetString("Role");
+            }
+            @if (!string.IsNullOrEmpty(sessionUser))
+            {
+                <span class="role-badge role-@(sessionRole?.ToLower())">@sessionRole</span>
+                <span class="username">@sessionUser</span>
+                <form method="post" asp-page="/Logout" style="display:inline">
+                    <button type="submit" class="btn-logout">Logout</button>
+                </form>
+            }
+            else
+            {
+                <a href="/Login" class="btn-login">Login</a>
+            }
+        </div>
+    </div>
+</header>
+
+<main class="page-content">
+    @RenderBody()
+</main>
+
+<footer class="page-footer">
+    <span>&copy; @DateTime.Now.Year DocManager AI — Secure Invoice Management</span>
+</footer>
+
+</body>
+</html>

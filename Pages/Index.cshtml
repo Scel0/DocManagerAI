@@ -1,0 +1,128 @@
+@page
+@model DocManagerAI.Pages.IndexModel
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div style="margin-bottom:28px">
+    <h1>Dashboard</h1>
+    <p class="text-muted">Invoice & document management — @DateTime.Now.ToString("dddd, dd MMMM yyyy")</p>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card blue">
+        <div class="stat-num">@Model.TotalDocs</div>
+        <div class="stat-label">Total Documents</div>
+    </div>
+    <div class="stat-card orange">
+        <div class="stat-num">@Model.PendingDocs</div>
+        <div class="stat-label">Pending Approval</div>
+    </div>
+    <div class="stat-card green">
+        <div class="stat-num">@Model.ApprovedDocs</div>
+        <div class="stat-label">Approved</div>
+    </div>
+    <div class="stat-card red">
+        <div class="stat-num">@Model.RejectedDocs</div>
+        <div class="stat-label">Rejected</div>
+    </div>
+    <div class="stat-card purple">
+        <div class="stat-num">R @Model.TotalSpend.ToString("N0")</div>
+        <div class="stat-label">Total Spend (Approved)</div>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.LoggedInUser))
+{
+    <div class="card card-sm" style="margin-bottom:24px">
+        <div style="display:flex;align-items:center;gap:12px">
+            <span class="role-badge role-@(Model.UserRole?.ToLower())">@Model.UserRole</span>
+            <span style="font-size:14px;color:#334155">
+                Logged in as <strong>@Model.LoggedInUser</strong>
+            </span>
+            @if (Model.PendingDocs > 0 && Model.UserRole != "Viewer")
+            {
+                <a href="/Approve" class="btn btn-sm btn-primary" style="margin-left:auto">
+                    Review @Model.PendingDocs pending →
+                </a>
+            }
+        </div>
+    </div>
+}
+else
+{
+    <div class="alert alert-info">
+        <strong>Not logged in.</strong> <a href="/Login">Login here</a> to upload documents or approve invoices.
+    </div>
+}
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;flex-wrap:wrap">
+    <div class="card">
+        <h3>Quick Actions</h3>
+        <div style="display:flex;flex-direction:column;gap:10px">
+            <a href="/Upload"    class="btn btn-primary">&#8679; Upload Invoice / Credit Note</a>
+            <a href="/Approve"   class="btn btn-success">&#10003; Review Pending Documents</a>
+            <a href="/Documents" class="btn btn-secondary">&#9776; All Documents</a>
+            <a href="/Reports"   class="btn btn-secondary">&#9998; Reports &amp; Insights</a>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>Approval Workflow</h3>
+        <div style="margin-bottom:14px">
+            <div class="step-track">
+                <div class="step-dot done">1</div>
+                <div class="step-line done"></div>
+                <div class="step-dot done">2</div>
+                <div class="step-line done"></div>
+                <div class="step-dot done">3</div>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:11px;color:#64748b;margin-top:4px">
+                <span>Reviewer</span><span>Manager</span><span>Finance</span>
+            </div>
+        </div>
+        <p style="font-size:12px;color:#64748b;line-height:1.6">
+            All documents pass through 3 mandatory approval stages before being finalised.
+            Each role approves their designated step.
+        </p>
+    </div>
+</div>
+
+@if (Model.RecentDocs.Any())
+{
+    <div class="card" style="margin-top:0">
+        <div class="section-header">
+            <h3 style="margin:0">Recent Documents</h3>
+            <a href="/Documents" class="text-muted" style="font-size:12px">View all →</a>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Invoice No.</th>
+                        <th>Vendor</th>
+                        <th>Type</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>Uploaded</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var doc in Model.RecentDocs)
+                    {
+                        <tr>
+                            <td>@(doc.InvoiceNumber ?? "—")</td>
+                            <td>@doc.Vendor</td>
+                            <td><span class="badge @(doc.DocumentType == "Credit Note" ? "badge-credit" : "badge-invoice")">@doc.DocumentType</span></td>
+                            <td>R @doc.Amount.ToString("N2")</td>
+                            <td>
+                                <span class="badge badge-@doc.Status.ToLower()">@doc.Status</span>
+                            </td>
+                            <td>@doc.UploadedAt.ToString("dd MMM yyyy")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}

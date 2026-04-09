@@ -1,0 +1,120 @@
+@page
+@model DocManagerAI.Pages.UploadModel
+@{
+    ViewData["Title"] = "Upload Document";
+}
+
+<div style="max-width:680px">
+    <div style="margin-bottom:24px">
+        <h1>Upload Document</h1>
+        <p class="text-muted">Accepted formats: PDF and DOCX only. Invoices and Credit Notes only.</p>
+    </div>
+
+    @{
+        var sessionRole = HttpContext.Session.GetString("Role");
+    }
+    @if (string.IsNullOrEmpty(sessionRole))
+    {
+        <div class="alert alert-danger">
+            <strong>Access Denied.</strong> You must <a href="/Login">log in</a> to upload documents.
+        </div>
+    }
+    else if (!DocManagerAI.Services.AuthService.CanUpload(sessionRole))
+    {
+        <div class="alert alert-danger">
+            <strong>Access Denied.</strong> Your role (@sessionRole) does not have upload permission.
+        </div>
+    }
+    else
+    {
+        @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+        {
+            <div class="alert alert-danger"><strong>Error:</strong> @Model.ErrorMessage</div>
+        }
+
+        @if (Model.SuccessResult != null)
+        {
+            <div class="alert alert-success">
+                <strong>Document uploaded successfully!</strong>
+            </div>
+
+            <div class="card">
+                <h3>Extracted Information</h3>
+                <table style="font-size:14px">
+                    <tbody>
+                        <tr>
+                            <td style="padding:8px 16px 8px 0;color:#64748b;font-weight:600;border:none;width:160px">Document Type</td>
+                            <td style="border:none;padding:8px 0">
+                                <span class="badge @(Model.SuccessResult.DocumentType == "Credit Note" ? "badge-credit" : "badge-invoice")">
+                                    @Model.SuccessResult.DocumentType
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding:8px 16px 8px 0;color:#64748b;font-weight:600;border:none">Vendor</td>
+                            <td style="border:none;padding:8px 0">@Model.SuccessResult.Vendor</td>
+                        </tr>
+                        <tr>
+                            <td style="padding:8px 16px 8px 0;color:#64748b;font-weight:600;border:none">Invoice Number</td>
+                            <td style="border:none;padding:8px 0">@(string.IsNullOrEmpty(Model.SuccessResult.InvoiceNumber) ? "Not detected" : Model.SuccessResult.InvoiceNumber)</td>
+                        </tr>
+                        <tr>
+                            <td style="padding:8px 16px 8px 0;color:#64748b;font-weight:600;border:none">Amount</td>
+                            <td style="border:none;padding:8px 0">R @Model.SuccessResult.Amount.ToString("N2")</td>
+                        </tr>
+                        <tr>
+                            <td style="padding:8px 16px 8px 0;color:#64748b;font-weight:600;border:none">VAT</td>
+                            <td style="border:none;padding:8px 0">R @Model.SuccessResult.VAT.ToString("N2")</td>
+                        </tr>
+                        <tr>
+                            <td style="padding:8px 16px 8px 0;color:#64748b;font-weight:600;border:none">Document Date</td>
+                            <td style="border:none;padding:8px 0">@(Model.SuccessResult.DocumentDate.HasValue ? Model.SuccessResult.DocumentDate.Value.ToString("dd MMM yyyy") : "Not detected")</td>
+                        </tr>
+                        <tr>
+                            <td style="padding:8px 16px 8px 0;color:#64748b;font-weight:600;border:none">Status</td>
+                            <td style="border:none;padding:8px 0">
+                                <span class="badge badge-pending">Pending — Step 1 (Reviewer)</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div style="margin-top:16px;display:flex;gap:10px">
+                    <a href="/Documents" class="btn btn-primary btn-sm">View All Documents</a>
+                    <a href="/Upload"    class="btn btn-secondary btn-sm">Upload Another</a>
+                </div>
+            </div>
+        }
+
+        @if (Model.SuccessResult == null)
+        {
+            <div class="card">
+                <div class="upload-zone">
+                    <div class="icon">&#128196;</div>
+                    <p>Drag and drop your file here, or click below to browse</p>
+                    <small>PDF (.pdf) and Word (.docx) files only &mdash; max 20 MB</small>
+                </div>
+
+                <form method="post" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label>Select File (PDF or DOCX)</label>
+                        <input type="file" name="UploadedFile" accept=".pdf,.docx" required />
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        &#8679; Upload &amp; Extract
+                    </button>
+                </form>
+            </div>
+
+            <div class="card card-sm">
+                <h3>What happens when you upload?</h3>
+                <ol style="font-size:13px;color:#475569;line-height:2;padding-left:18px">
+                    <li>File is saved securely to the uploads folder</li>
+                    <li>AI reads the document and extracts: vendor, invoice number, amount, VAT, date</li>
+                    <li>Duplicate check runs — both invoice number AND vendor + amount are checked</li>
+                    <li>If no duplicate, document enters the 3-step approval workflow</li>
+                </ol>
+            </div>
+        }
+    }
+</div>
